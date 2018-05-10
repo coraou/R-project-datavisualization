@@ -1,0 +1,503 @@
+Red Wine Quality Exploration by Cora Ou
+========================================================
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
+# Load all of the packages that you end up using
+# in your analysis in this code chunk.
+
+# Notice that the parameter "echo" was set to FALSE for this code chunk.
+# This prevents the code from displaying in the knitted HTML output.
+# You should set echo=FALSE for all code chunks in your file.
+
+library(ggplot2)
+library(knitr)
+library(gridExtra)
+```
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=12, fig.height=8, fig.path='Figs/',
+                      echo=FALSE, warning=FALSE, message=FALSE)
+```
+
+
+```{r echo=FALSE, Load_the_Data}
+# Load the Data
+setwd('C:/Users/smasung/Desktop/stu/work/r/project')
+wqr <- read.csv('wineQualityReds.csv')
+```
+
+This report explores a dataset containing 12 attributes for approximately 1600 red wines.
+
+# Univariate Plots Section
+```{r echo=FALSE,Univariate_Plots}
+
+str(wqr)
+summary(wqr)
+
+
+```
+
+our data set contains 12 variables (13 in total, but variable x does not count) and 1599 observations.
+Let's first plot histogram of quality.
+
+```{r echo=FALSE, message=FALSE}
+qplot(x = quality, data = wqr,color = I('black'), fill = I('#099DD9')) +
+  ggtitle('quality distribution')
+
+```
+
+The data of the quality are discrete. Most of them fall on 5 and 6. I wonder how other variables besides chemical properties like alcohol,residual sugar, PH, density, acidity and acid, SO2(free and total) and sulphates and chlorides affect quality, and how they link to each other.
+
+```{r}
+qplot(x = alcohol, data = wqr,color = I('black'), fill = I('#099DD9')) +
+  ggtitle('alcohol distribution')
+summary(wqr$alcohol)
+```
+
+Alcohol peaks around 9, with its median 10.20 and mean 10.42
+
+```{r}
+qplot(x = residual.sugar, data = wqr,color = I('black'), fill = I('#099DD9')) +
+  ggtitle('residual sugar distribution')
+summary(wqr$residual.sugar)
+```
+
+Residual.suagr is skewed to the left, with most of the data below 6. Its median is 2.20, mean 2.54.
+
+```{r}
+qplot(x = pH, data = wqr,color = I('black'), fill = I('#099DD9')) +
+  ggtitle('pH distribution')
+summary(wqr$pH)
+```
+
+Most of the red wines have a pH of about 3.3.
+
+```{r}
+qplot(x = density, data = wqr,color = I('black'), fill = I('#099DD9')) +
+  ggtitle('density distribution')
+summary(wqr$density)
+```
+
+Most of the red wines have density of between 0.995 and 1.000.
+Next, I'm going to investigate the three variables about acid.
+
+```{r}
+qplot(x = fixed.acidity, data = wqr,color = I('black'), fill = I('#099DD9')) +
+  ggtitle('fixed acidity distribution')
+qplot(x = volatile.acidity, data = wqr,color = I('black'), fill = I('#099DD9')) +
+  ggtitle('volatile acidity distribution')
+qplot(x = citric.acid, data = wqr,color = I('black'), fill = I('#099DD9')) +
+  ggtitle('citric acid distribution')
+
+```
+
+The fixed acidity of the majority of red wines are between 6 to 8.
+The volatile acidity peaks at 0.6, most of them falling between 0.2 and 0.8.
+Most of the citric.acid seems to a have a spread between 0 and 0.75.
+
+```{r message=FALSE, warning=FALSE}
+qplot(x = free.sulfur.dioxide, data = wqr,color = I('black'), fill = I('#099DD9')) +
+  ggtitle('free sulfur dioxide distribution')
+qplot(x = total.sulfur.dioxide, data = wqr,color = I('black'), fill = I('#099DD9')) +
+  ggtitle('total sulfur dioxide distribution')
+qplot(x = sulphates, data = wqr,color = I('black'), fill = I('#099DD9')) +
+  ggtitle('sulphates distribution')
+```
+
+Most of the free sulfur dioxide seems to be between the 0-40.
+Most of the total sulfur dioxide seems to a have a spread between 0 and 150.
+Sulphates mostly fall between 0.5 and 1.0.
+
+
+```{r}
+qplot(x = chlorides, data = wqr,color = I('black'), fill = I('#099DD9')) +
+  ggtitle('chlorides distribution')
+summary(wqr$chlorides)
+```
+
+chlorides is skewed to the left, with most of the data below 0.1. Its median is 0.079, mean 0.08747.
+
+```{r message=FALSE, warning=FALSE}
+wqr$volatile_acidity_bucket <- cut(wqr$volatile.acidity,c(0,0.4,0.6,0.8,1.58))
+wqr$volatile_acidity_bucket <- factor(wqr$volatile_acidity_bucket)
+```
+
+```{r}
+qplot(x = volatile_acidity_bucket, data = wqr,color = I('black'), fill = I('#099DD9'))
+```
+
+Most of the wines fall in the range of (0.4,0.6] in terms of volatile.acidity.
+
+```{r}
+wqr$citric_acid_bucket <- cut(wqr$citric.acid,c(0,0.25,0.50,1.00))
+wqr$citric_acid_bucket <- factor(wqr$citric_acid_bucket)
+```
+
+```{r}
+wqr$citric_have_or_not <- NA
+wqr$citric_have_or_not <- ifelse(wqr$citric.acid >0, 1, 0)
+wqr$citric_have_or_not <- factor(wqr$citric_have_or_not)
+```
+
+```{r}
+qplot(x = citric_acid_bucket, data = wqr,color = I('black'), fill = I('#099DD9'))
+```
+
+Most of the wines fall in the range of (0,0.25] in terms of citric.acid.
+
+```{r}
+wqr$quality_bucket <- cut(wqr$quality,c(0,4,6,10))
+wqr$quality_bucket <- factor(wqr$quality_bucket)
+```
+
+```{r}
+qplot(x = quality_bucket, data = wqr,color = I('black'), fill = I('#099DD9'))
+```
+
+Most of the wines fall in the range of (4,6] in terms of quality.
+
+# Univariate Analysis
+
+### What is the structure of your dataset?
+There are 1599 wines in the data set with 12 features(fixed.acidity, volatile.acidity, citric.acid, residual.sugar, chlorides, free.sulfur.dioxide, total.sulfur.dioxide, density, pH, sulphates, alcohol, quality)
+
+Observations:
+1. Most of the wines are just mediocre, and only a few of them could be considered of good quality.
+2. Most of the features fall in a small range. For example, the data of density are between
+0.995 and 1.000.
+3. Red wines seem to be closely related to acid, SO2 and alcohol.
+
+### What is/are the main feature(s) of interest in your dataset?
+The main features in the dataset are acidity(both fixed and volatile) and acid and quality. I¡¯d like to determine which features are best for predicting quality of wine and the relationships between those features. I think along with acidity (both fixed and volatile) and acid, alcohol and quantity of SO2 (free and total) might be used for predictive modeling to determine quality of wine.
+
+### What other features in the dataset do you think will help support your investigation into your feature(s) of interest?
+alcohol and quantity of SO2 (free and total)
+
+### Did you create any new variables from existing variables in the dataset?
+Yes.
+Quality_bucket is the variable added to the dataset which distributes the sample into 3 quality bins (0,4], (4,6] and (6,10].
+As the description says that high amount of volatile.acidity can lead to an unpleasant taste and citric.acid can make the wine taste better when found in small amount, volatile_acidity_bucket,citric_acid_bucket and citric_have_or_not are also added to the dataset. 
+
+### Of the features you investigated, were there any unusual distributions? Did you perform any operations on the data to tidy, adjust, or change the form of the data? If so, why did you do this?
+Most of the variables have outliers.
+
+
+# Bivariate Plots Section
+
+Lets see the correlation behaviour between the features.
+
+
+```{r echo=FALSE, Bivariate_Plots}
+library(GGally)
+theme_set(theme_minimal(20))
+names(wqr)
+set.seed(1836)
+wqr_subset <- wqr[,c(2:13)]
+ggpairs(wqr_subset[sample.int(nrow(wqr_subset), 1000), ])
+```
+
+The above plot indicates that the three variables related to acid and alcohol are moderately correlated with quality. I'd like to first take a closer look at the three acid.
+
+```{r}
+ggplot(aes(x = quality_bucket, y = fixed.acidity), data = wqr) +
+  geom_jitter( alpha = 0.3)  +
+  geom_boxplot( alpha = 0.5) +
+  ggtitle('fixed acidity and quality') 
+
+```
+
+It seems fixed.acidity and quality are slightly correlated.
+
+```{r}
+ggplot(aes(x = quality_bucket, y = volatile.acidity), data = wqr) +
+  geom_jitter( alpha = 0.3)  +
+  geom_boxplot( alpha = 0.5) +
+  ggtitle('volatile acidity and quality') 
+```
+
+
+```{r}
+#quality gets better as the amount of citric acid increases
+ggplot(aes(x = volatile_acidity_bucket, y = quality, color = I('black'), fill = I('#099DD9')), data = wqr) +
+  geom_bar(stat = 'summary',fun.y = mean)
+```
+
+It's clear that the quality of red wine will get worse as the amount of volatile.acidity increases.
+Let's investigate another acid variable.
+
+```{r}
+
+ggplot(aes(x = quality_bucket, y = citric.acid), data = wqr) +
+  geom_jitter( alpha = 0.3)  +
+  geom_boxplot( alpha = 0.5) +
+  ggtitle('citric acid and quality') 
+
+```
+
+It's hard to determine their relationship only according to this plot. I notice citric.acid can reach zero. Let's see if the presence of citric.acid will affect the quality.
+
+```{r}
+ggplot(aes(x = citric_have_or_not, y = quality, color = I('black'), 
+           fill = I('#099DD9')), data = wqr) +
+  geom_bar(stat = 'summary',fun.y = mean)
+```
+
+It seems wines with citric are slightly better.
+But I'd like to see with what amount of citric.acid the wines are the best.
+
+```{r}
+citric_have <- subset(wqr, wqr$citric.acid != 0)
+citric_not <-  subset(wqr, wqr$citric.acid == 0)
+```
+
+```{r}
+#quality gets better as the amount of citric acid increases
+ggplot(aes(x = citric_acid_bucket, y = quality, color = I('black'), 
+           fill = I('#099DD9')), data = citric_have) +
+  geom_bar(stat = 'summary',fun.y = mean)
+```
+
+It seems that quality gets better as the amount of citric acid increases.
+But I notice in the matrix plot, citric.acid and fixed.acidity are closely related.
+Let's investigate their relationship.
+
+
+```{r}
+ggplot(aes(x = citric.acid, y = fixed.acidity), data = wqr) +
+  geom_point(alpha = 1/10) +
+  xlim(0,0.75) +
+  geom_smooth() +
+  ggtitle('citric acid and fixed acidity')
+
+```
+
+They seem to have positive correlation.
+I'm also curious about the correlation between fixed.acidity and volatile.acidity.
+
+```{r}
+ggplot(aes(x = volatile.acidity, y = fixed.acidity), data = wqr) +
+  geom_point(alpha = 1/10) +
+  xlim(0,1.2) +
+  geom_smooth() +
+  ggtitle('volatile acidity and fixed acidity')
+```
+
+It seems they are slightly related.
+I also would like to see if volatile.acidity and citric.acid have any correlation.
+
+```{r}
+ggplot(aes(x = volatile.acidity, y = citric.acid), data = wqr) +
+  geom_point(alpha = 1/10) +
+  xlim(0,1.2) +
+  geom_smooth() +
+  ggtitle('volatile acidity and citric acid')
+```
+
+It's clear that they are negatively correlated.
+As these three variables are all some kinds of acid, I suspect they are also related to pH.
+
+```{r message=FALSE, warning=FALSE}
+p1 <- ggplot(aes(x = fixed.acidity, y = pH), data = wqr) +
+  geom_point(alpha = 1/20) +
+  xlim(6,14) +
+  ggtitle('fixed.acidity and pH') +
+  geom_smooth() 
+p2 <- ggplot(aes(x = volatile.acidity, y = pH), data = wqr) +
+  geom_point(alpha = 1/20) +
+  geom_smooth() +
+  ggtitle('volatile.acidity and pH')
+p3 <- ggplot(aes(x = citric.acid, y = pH), data = wqr) +
+  geom_point(alpha = 1/20) +
+  geom_smooth() +
+  ggtitle('citric.acid and pH')
+grid.arrange(p1, p2, p3, ncol = 1)
+```
+
+As the amounts of fixed.acidity and citric.acid increase, pH decreases, which is not unexpected. But pH will go up as the amount of volatile.acidity increases.
+So all thses three acid variables are closely related to pH and to quality, perhaps pH and quality are also closely related.
+
+```{r}
+ggplot(aes(x = quality_bucket, y = pH), data = wqr) +
+  geom_jitter( alpha = 0.3)  +
+  geom_boxplot( alpha = 0.5) +
+  ggtitle('pH and quality')
+```
+
+Though acid is related to quality and to pH, pH is not related to quality. This is surprising.
+I also suspect pH is related to variables about SO2. Let's see if they are really correlated.
+
+```{r}
+p1 <- ggplot(aes(x = free.sulfur.dioxide, y = pH), data = wqr) +
+  geom_point(alpha = 1/20) +
+  ggtitle('free.sulfur.dioxide and pH') +
+  geom_smooth() 
+p2 <- ggplot(aes(x = total.sulfur.dioxide, y = pH), data = wqr) +
+  geom_point(alpha = 1/20) +
+  geom_smooth() +
+  xlim(0,200) +
+  ggtitle('total.sulfur.dioxide and pH')
+p3 <- ggplot(aes(x = sulphates, y = pH), data = wqr) +
+  geom_point(alpha = 1/20) +
+  geom_smooth() +
+  ggtitle('sulphates and pH')
+grid.arrange(p1, p2, p3, ncol = 1)
+```
+
+It seems SO2(both free and total) are not related to pH. As for sulphates, it is slightly negatively correlated with pH. 
+I'm also curious about the relationship between the three SO2 variables. 
+
+```{r message=FALSE, warning=FALSE}
+ggplot(aes(x = free.sulfur.dioxide, y = sulphates), data = wqr) +
+  geom_point(alpha = 1/10) +
+  xlim(0,60) +
+  geom_smooth() +
+  ggtitle('free sulfur dioxide and sulphates') 
+```
+
+```{r message=FALSE, warning=FALSE}
+ggplot(aes(x = total.sulfur.dioxide, y = sulphates), data = wqr) +
+  geom_point(alpha = 1/10) +
+  xlim(0,150) +
+  geom_smooth()  +
+  ggtitle('total sulfur dioxide and sulphates') 
+```
+
+It seems SO2(both free and total) do not have close correlation with sulphates.
+
+```{r message=FALSE, warning=FALSE}
+ggplot(aes(x = free.sulfur.dioxide, y = total.sulfur.dioxide), data = wqr) +
+  geom_point(alpha = 1/10) +
+  geom_smooth()  +
+  ggtitle('free sulfur dioxide and total sulfur dioxide') 
+```
+
+As the quantity of free sulfur dioxide goes up, the amount of total sulfur dioxide also increases. This is normal because total sulfur dioxide includes free sulfur dioxide.
+
+Let's now turn our eyes to the effect of alcohol.
+
+```{r}
+ggplot(aes(x = quality_bucket, y = alcohol), data = wqr) +
+  geom_jitter( alpha = 0.3)  +
+  geom_boxplot( alpha = 0.5) +
+  ggtitle('alcohol and quality')
+```
+
+Like what I have expected, alcohol is strongly related to quality.
+
+# Bivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the investigation. How did the feature(s) of interest vary with other features in the dataset?
+Fixed acidity and quality do not have much correlaiton and citric acid and quality are slightly positively correlated. But Volatile acidity and quality have strong negative correlation.
+Acidity(fixed and volatile) and citric acid are strongly correlated. But fixed acidity and volatile acidity are only slightly correlated. 
+
+### Did you observe any interesting relationships between the other features (not the main feature(s) of interest)?
+Acidity(fixed and volatile) and citric acid have strong correlation with pH, while SO2 and sulphates do not. And SO2(free and total) are not related to pH.  
+
+### What was the strongest relationship you found?
+Positive:
+fixed.acidity and citric.acid
+Negative:
+fixed.acidity and pH
+
+# Multivariate Plots Section
+
+```{r echo=FALSE, Multivariate_Plots}
+ggplot(aes(x = volatile.acidity, y = alcohol,color = quality_bucket), 
+       data = wqr) +
+  geom_point() +
+  scale_color_brewer(type = 'seq')+
+  ggtitle("Volatile.acidity and alcohol VS quality") +
+  xlab("volatile.acidity( g / dm^3)") +
+  ylab("alcohol(% by volume)")
+
+```
+
+Best wines concentrate when volatile.acidity is below 0.4 and alcohol is about 12.
+
+```{r}
+ggplot(aes(x = volatile.acidity, y = citric.acid, color = quality_bucket), 
+       data = wqr) +
+  geom_point() +
+  scale_color_brewer(type = 'seq')+
+  ggtitle("Volatile.acidity and citric.acid VS quality") +
+  xlab("volatile.acidity( g / dm^3)") +
+  ylab("citric.acid( g / dm^3)")
+```
+
+I'd like to say best wines concentrate when citric.acid is 0.5 and volatile.acidity is 0.4, but there are also many mediocre wines.
+
+```{r}
+ggplot(aes(x = fixed.acidity, y = pH, color = volatile_acidity_bucket),
+       data = wqr) +
+  geom_point() +
+  scale_color_brewer(type = 'seq')
+```
+
+It seems the pH of red wine decreases when fixed.acidity increases and volatile.acidity decreases.
+
+# Multivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the investigation. Were there features that strengthened each other in terms of looking at your feature(s) of interest?
+Best wines concentrate when volatile.acidity is below 0.4 and alcohol is about 12.
+As for pH, I also discover that pH of red wine decreases when fixed.acidity increases and volatile.acidity decreases.
+
+### Were there any interesting or surprising interactions between features?
+Though I can find where best wines concentrate in the alcohol and volatile.acidity plot, it is hard to find when it comes to volatile.acidity and citric.acid. Perhaps it has something to do with how correlated the variables are with quality.
+
+
+------
+
+# Final Plots and Summary
+
+### Plot One
+```{r echo=FALSE, Plot_One}
+ggplot(aes(x = quality_bucket, y = alcohol), data = wqr) +
+  geom_jitter( alpha = 0.3)  +
+  geom_boxplot( alpha = 0.5) +
+  ggtitle('alcohol and quality') 
+```
+
+### Description One
+It seems most best wines have alcohol of below 12%.
+
+### Plot Two
+```{r echo=FALSE, Plot_Two}
+ggplot(aes(x = quality_bucket, y = volatile.acidity), data = wqr) +
+  geom_jitter( alpha = 0.3)  +
+  geom_boxplot( alpha = 0.5) +
+  ggtitle('volatile acidity and quality') 
+```
+
+### Description Two
+Best wines have only 0.4g/dm^3 of volatile acidity.
+
+### Plot Three
+```{r echo=FALSE, Plot_Three}
+ggplot(aes(x = volatile.acidity, y = alcohol,color = quality_bucket), 
+       data = wqr) +
+  geom_point() +
+  scale_color_brewer(type = 'seq')+
+  ggtitle("Volatile.acidity and alcohol VS quality") +
+  xlab("volatile.acidity( g / dm^3)") +
+  ylab("alcohol(% by volume)")
+
+```
+
+### Description Three
+It seems best wines constitute volatile acidity of lower than 0.4g/dm^3 and more than 10% alcohol. Mediocre wines concentrate when volatile acidity is between 0.4 and 0.8 and alcohol is about 10%
+------
+
+# Reflection
+The data set contains information on almost 1599 wine sampels across 12 features. In initial phase, I investigated individual variables(univariate analysis). Then I explored quality of wine accross variables and the relationship between those variables. (bivariate analysis and multivariate analysis)
+
+The analysis performed on the sample dataset can be summarised as below:
+It is discovered that alcohol and volatile.acidity are significantly correlated with quality. So among the 12 features, these two properties can serve as predictors of the quality of red wine. Also, as expected, pH is related to acidity(fixed and volatile) and acid. But surprisingly, it is not correlated with SO2.
+
+Some of the learnings from the analysis were as follows:
+
+We can't take the relationship between variables as granted. When I was investigating the relations between quality and other variables, I discovered that acidity and acid are related to pH and to quality. So I thought pH and quality must also have correlations. But after I plotted, I found that there was no correlation between these two variables. Also, I suspected SO2 was significantly correlated to pH. But actually it was the other way around. So everytime we investigate some kinds of relationships, we'd better not rely too much on our intutions. Instead, we should draw plots or calculate their coefficient.
+
+A limitation of the current analysis is that the quality of the red wines were rated only by three experts, which lacked authority and credibility. Furthermore, unlike carat of the diamonds dataset whose coefficient with price is about 1, the strongest predictor of quality of this dataset has a coefficient of only 0.49. So perhaps there are other more reliable variables that can predict the quality of red wine.
+
+So I'd like to suggest that people who take charge of the data collection of this data set invite more experts to rate the quality of these red wines. Also, other variables like the quantity of the Tartaric acid which is the most important in wine according to wiki pedia, can be included in the data set.
